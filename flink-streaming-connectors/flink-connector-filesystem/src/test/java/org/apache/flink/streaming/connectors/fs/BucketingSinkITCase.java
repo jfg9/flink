@@ -21,12 +21,10 @@ package org.apache.flink.streaming.connectors.fs;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Type;
 import org.apache.avro.file.DataFileConstants;
-import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericData.StringType;
-import org.apache.avro.io.DatumReader;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichFilterFunction;
@@ -66,7 +64,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Tests for {@link RollingSink}. These
+ * Tests for {@link BucketingSink}. These
  * tests test the different output methods as well as the rolling feature using a manual clock
  * that increases time in lockstep with element computation using latches.
  *
@@ -74,7 +72,7 @@ import java.util.Map;
  * This only tests the rolling behaviour of the sink. There is a separate ITCase that verifies
  * exactly once behaviour.
  */
-public class RollingSinkITCase extends StreamingMultipleProgramsTestBase {
+public class BucketingSinkITCase extends StreamingMultipleProgramsTestBase {
 
 	@ClassRule
 	public static TemporaryFolder tempFolder = new TemporaryFolder();
@@ -122,8 +120,8 @@ public class RollingSinkITCase extends StreamingMultipleProgramsTestBase {
 				.broadcast()
 				.filter(new OddEvenFilter());
 
-		RollingSink<String> sink = new RollingSink<String>(outPath)
-				.setBucketer(new NonRollingBucketer())
+		BucketingSink<String> sink = new BucketingSink<String>(outPath)
+				.setBucketer(new BasePathBucketer())
 				.setPartPrefix("part")
 				.setPendingPrefix("")
 				.setPendingSuffix("");
@@ -138,7 +136,7 @@ public class RollingSinkITCase extends StreamingMultipleProgramsTestBase {
 				})
 				.addSink(sink);
 
-		env.execute("RollingSink String Write Test");
+		env.execute("BucketingSink String Write Test");
 
 		FSDataInputStream inStream = dfs.open(new Path(outPath + "/part-0-0"));
 
@@ -189,16 +187,16 @@ public class RollingSinkITCase extends StreamingMultipleProgramsTestBase {
 		});
 
 
-		RollingSink<Tuple2<IntWritable, Text>> sink = new RollingSink<Tuple2<IntWritable, Text>>(outPath)
+		BucketingSink<Tuple2<IntWritable, Text>> sink = new BucketingSink<Tuple2<IntWritable, Text>>(outPath)
 				.setWriter(new SequenceFileWriter<IntWritable, Text>())
-				.setBucketer(new NonRollingBucketer())
+				.setBucketer(new BasePathBucketer())
 				.setPartPrefix("part")
 				.setPendingPrefix("")
 				.setPendingSuffix("");
 
 		mapped.addSink(sink);
 
-		env.execute("RollingSink String Write Test");
+		env.execute("BucketingSink String Write Test");
 
 		FSDataInputStream inStream = dfs.open(new Path(outPath + "/part-0-0"));
 
@@ -264,16 +262,16 @@ public class RollingSinkITCase extends StreamingMultipleProgramsTestBase {
 		});
 
 
-		RollingSink<Tuple2<IntWritable, Text>> sink = new RollingSink<Tuple2<IntWritable, Text>>(outPath)
+		BucketingSink<Tuple2<IntWritable, Text>> sink = new BucketingSink<Tuple2<IntWritable, Text>>(outPath)
 				.setWriter(new SequenceFileWriter<IntWritable, Text>("Default", SequenceFile.CompressionType.BLOCK))
-				.setBucketer(new NonRollingBucketer())
+				.setBucketer(new BasePathBucketer())
 				.setPartPrefix("part")
 				.setPendingPrefix("")
 				.setPendingSuffix("");
 
 		mapped.addSink(sink);
 
-		env.execute("RollingSink String Write Test");
+		env.execute("BucketingSink String Write Test");
 
 		FSDataInputStream inStream = dfs.open(new Path(outPath + "/part-0-0"));
 
@@ -336,16 +334,16 @@ public class RollingSinkITCase extends StreamingMultipleProgramsTestBase {
 		Schema valueSchema = Schema.create(Type.STRING);
 		properties.put(AvroKeyValueSinkWriter.CONF_OUTPUT_KEY_SCHEMA, keySchema.toString());
 		properties.put(AvroKeyValueSinkWriter.CONF_OUTPUT_VALUE_SCHEMA, valueSchema.toString());
-		RollingSink<Tuple2<Integer, String>> sink = new RollingSink<Tuple2<Integer, String>>(outPath)
+		BucketingSink<Tuple2<Integer, String>> sink = new BucketingSink<Tuple2<Integer, String>>(outPath)
 				.setWriter(new AvroKeyValueSinkWriter<Integer, String>(properties))
-				.setBucketer(new NonRollingBucketer())
+				.setBucketer(new BasePathBucketer())
 				.setPartPrefix("part")
 				.setPendingPrefix("")
 				.setPendingSuffix("");
 
 		source.addSink(sink);
 
-		env.execute("RollingSink Avro KeyValue Writer Test");
+		env.execute("BucketingSink Avro KeyValue Writer Test");
 
 		GenericData.setStringType(valueSchema, StringType.String);
 		Schema elementSchema = AvroKeyValue.getSchema(keySchema, valueSchema);
@@ -403,16 +401,16 @@ public class RollingSinkITCase extends StreamingMultipleProgramsTestBase {
 		properties.put(AvroKeyValueSinkWriter.CONF_OUTPUT_VALUE_SCHEMA, valueSchema.toString());
 		properties.put(AvroKeyValueSinkWriter.CONF_COMPRESS, String.valueOf(true));
 		properties.put(AvroKeyValueSinkWriter.CONF_COMPRESS_CODEC, DataFileConstants.SNAPPY_CODEC);
-		RollingSink<Tuple2<Integer, String>> sink = new RollingSink<Tuple2<Integer, String>>(outPath)
+		BucketingSink<Tuple2<Integer, String>> sink = new BucketingSink<Tuple2<Integer, String>>(outPath)
 				.setWriter(new AvroKeyValueSinkWriter<Integer, String>(properties))
-				.setBucketer(new NonRollingBucketer())
+				.setBucketer(new BasePathBucketer())
 				.setPartPrefix("part")
 				.setPendingPrefix("")
 				.setPendingSuffix("");
 
 		source.addSink(sink);
 
-		env.execute("RollingSink Avro KeyValue Writer Test");
+		env.execute("BucketingSink Avro KeyValue Writer Test");
 
 		GenericData.setStringType(valueSchema, StringType.String);
 		Schema elementSchema = AvroKeyValue.getSchema(keySchema, valueSchema);
@@ -498,7 +496,7 @@ public class RollingSinkITCase extends StreamingMultipleProgramsTestBase {
 
 				});
 
-		RollingSink<String> sink = new RollingSink<String>(outPath)
+		BucketingSink<String> sink = new BucketingSink<String>(outPath)
 				.setBucketer(new DateTimeBucketer("ss"))
 				.setPartPrefix("part")
 				.setPendingPrefix("")
@@ -506,7 +504,7 @@ public class RollingSinkITCase extends StreamingMultipleProgramsTestBase {
 
 		mapped.addSink(sink);
 
-		env.execute("RollingSink String Write Test");
+		env.execute("BucketingSink String Write Test");
 
 		RemoteIterator<LocatedFileStatus> files = dfs.listFiles(new Path(outPath), true);
 

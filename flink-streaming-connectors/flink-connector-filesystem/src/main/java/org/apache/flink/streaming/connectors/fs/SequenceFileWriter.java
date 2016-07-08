@@ -36,7 +36,7 @@ import java.io.IOException;
 
 /**
  * A {@link Writer} that writes the bucket files as Hadoop {@link SequenceFile SequenceFiles}.
- * The input to the {@link RollingSink} must
+ * The input to the {@link BucketingSink} must
  * be a {@link org.apache.flink.api.java.tuple.Tuple2} of two Hadopo
  * {@link org.apache.hadoop.io.Writable Writables}.
  *

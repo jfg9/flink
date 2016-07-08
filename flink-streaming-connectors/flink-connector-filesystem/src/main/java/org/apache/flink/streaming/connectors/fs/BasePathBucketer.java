@@ -21,9 +21,9 @@ import org.apache.hadoop.fs.Path;
 
 /**
  * A {@link org.apache.flink.streaming.connectors.fs.Bucketer} that does not perform any
- * rolling of files. All files are written to the base path.
+ * bucketing of files. All files are written to the base path.
  */
-public class NonRollingBucketer implements Bucketer {
+public class BasePathBucketer implements Bucketer {
 	private static final long serialVersionUID = 1L;
 
 	@Override
@@ -38,6 +38,6 @@ public class NonRollingBucketer implements Bucketer {
 
 	@Override
 	public String toString() {
-		return "NonRollingBucketer";
+		return "BasePathBucketer";
 	}
 }

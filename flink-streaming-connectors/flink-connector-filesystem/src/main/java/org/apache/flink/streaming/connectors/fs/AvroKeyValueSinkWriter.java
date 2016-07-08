@@ -46,7 +46,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 <pre>
 Usage:
 {@code
-		RollingSink<Tuple2<Long , Long>> sink = new RollingSink<Tuple2<Long , Long>>("/tmp/path");
+		BucketingSink<Tuple2<Long , Long>> sink = new BucketingSink<Tuple2<Long , Long>>("/tmp/path");
 		sink.setBucketer(new DateTimeBucketer("yyyy-MM-dd/HH/mm/"));
 		sink.setPendingSuffix(".avro");
 		Map<String,String> properties = new HashMap<>();

@@ -63,7 +63,7 @@ import java.util.UUID;
  * and start the new bucket directory. The default bucketer is a {@link DateTimeBucketer} with
  * date format string {@code ""yyyy-MM-dd--HH"}. You can specify a custom {@code Bucketer}
  * using {@link #setBucketer(Bucketer)}. For example, use
- * {@link org.apache.flink.streaming.connectors.fs.NonRollingBucketer} if you don't want to have
+ * {@link BasePathBucketer} if you don't want to have
  * buckets but still write part files in a fault-tolerant way.
  *
  * <p>
@@ -107,7 +107,7 @@ import java.util.UUID;
  * Example:
  *
  * <pre>{@code
- *     new RollingSink<Tuple2<IntWritable, Text>>(outPath)
+ *     new BucketingSink<Tuple2<IntWritable, Text>>(outPath)
  *         .setWriter(new SequenceFileWriter<IntWritable, Text>())
  *         .setBucketer(new DateTimeBucketer("yyyy-MM-dd--HHmm")
  * }</pre>
@@ -120,10 +120,10 @@ import java.util.UUID;
  *
  * @param <T> Type of the elements emitted by this sink
  */
-public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConfigurable, Checkpointed<RollingSink.BucketState>, CheckpointListener {
+public class BucketingSink<T> extends RichSinkFunction<T> implements InputTypeConfigurable, Checkpointed<BucketingSink.BucketState>, CheckpointListener {
 	private static final long serialVersionUID = 1L;
 
-	private static Logger LOG = LoggerFactory.getLogger(RollingSink.class);
+	private static Logger LOG = LoggerFactory.getLogger(BucketingSink.class);
 
 
 	// --------------------------------------------------------------------------------------------
@@ -284,7 +284,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	private transient org.apache.hadoop.conf.Configuration hadoopConf;
 	
 	/**
-	 * Creates a new {@code RollingSink} that writes files to the given base directory.
+	 * Creates a new {@code BucketingSink} that writes files to the given base directory.
 	 *
 	 * <p>
 	 * This uses a{@link DateTimeBucketer} as bucketer and a {@link StringWriter} has writer.
@@ -292,7 +292,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	 *
 	 * @param basePath The directory to which to write the bucket files.
 	 */
-	public RollingSink(String basePath) {
+	public BucketingSink(String basePath) {
 		this.basePath = basePath;
 		this.bucketer = new DateTimeBucketer();
 		this.batchSize = DEFAULT_BATCH_SIZE;
@@ -385,11 +385,11 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 		boolean shouldRoll = false;
 		if (!isWriterOpen) {
 			shouldRoll = true;
-			LOG.debug("RollingSink {} starting new initial bucket. ", subtaskIndex);
+			LOG.debug("BucketingSink {} starting new initial bucket. ", subtaskIndex);
 		}
 		if (bucketer.shouldStartNewBucket(new Path(basePath), currentBucketDirectory)) {
 			shouldRoll = true;
-			LOG.debug("RollingSink {} starting new bucket because {} said we should. ", subtaskIndex, bucketer);
+			LOG.debug("BucketingSink {} starting new bucket because {} said we should. ", subtaskIndex, bucketer);
 			// we will retrieve a new bucket base path in openNewPartFile so reset the part counter
 			partCounter = 0;
 		}
@@ -398,7 +398,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 			if (isWriterOpen && writePosition > batchSize) {
 				shouldRoll = true;
 				LOG.debug(
-						"RollingSink {} starting new bucket because file position {} is above batch size {}.",
+						"BucketingSink {} starting new bucket because file position {} is above batch size {}.",
 						subtaskIndex,
 						writePosition,
 						batchSize);
@@ -676,8 +676,8 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 				bucketState.currentFile = null;
 				bucketState.currentFileValidLength = -1;
 			} catch (IOException e) {
-				LOG.error("Error while restoring RollingSink state.", e);
-				throw new RuntimeException("Error while restoring RollingSink state.", e);
+				LOG.error("Error while restoring BucketingSink state.", e);
+				throw new RuntimeException("Error while restoring BucketingSink state.", e);
 			} catch (InvocationTargetException | IllegalAccessException e) {
 				LOG.error("Cound not invoke truncate.", e);
 				throw new RuntimeException("Could not invoke truncate.", e);
@@ -757,7 +757,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	 *
 	 * @param batchSize The bucket part file size in bytes.
 	 */
-	public RollingSink<T> setBatchSize(long batchSize) {
+	public BucketingSink<T> setBatchSize(long batchSize) {
 		this.batchSize = batchSize;
 		return this;
 	}
@@ -767,7 +767,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	 *
 	 * @param bucketer The bucketer to use.
 	 */
-	public RollingSink<T> setBucketer(Bucketer bucketer) {
+	public BucketingSink<T> setBucketer(Bucketer bucketer) {
 		this.bucketer = bucketer;
 		return this;
 	}
@@ -777,7 +777,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	 *
 	 * @param writer The {@code Writer} to use.
 	 */
-	public RollingSink<T> setWriter(Writer<T> writer) {
+	public BucketingSink<T> setWriter(Writer<T> writer) {
 		this.writerTemplate = writer;
 		return this;
 	}
@@ -785,7 +785,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	/**
 	 * Sets the suffix of in-progress part files. The default is {@code "in-progress"}.
 	 */
-	public RollingSink<T> setInProgressSuffix(String inProgressSuffix) {
+	public BucketingSink<T> setInProgressSuffix(String inProgressSuffix) {
 		this.inProgressSuffix = inProgressSuffix;
 		return this;
 	}
@@ -793,7 +793,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	/**
 	 * Sets the prefix of in-progress part files. The default is {@code "_"}.
 	 */
-	public RollingSink<T> setInProgressPrefix(String inProgressPrefix) {
+	public BucketingSink<T> setInProgressPrefix(String inProgressPrefix) {
 		this.inProgressPrefix = inProgressPrefix;
 		return this;
 	}
@@ -801,7 +801,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	/**
 	 * Sets the suffix of pending part files. The default is {@code ".pending"}.
 	 */
-	public RollingSink<T> setPendingSuffix(String pendingSuffix) {
+	public BucketingSink<T> setPendingSuffix(String pendingSuffix) {
 		this.pendingSuffix = pendingSuffix;
 		return this;
 	}
@@ -809,7 +809,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	/**
 	 * Sets the prefix of pending part files. The default is {@code "_"}.
 	 */
-	public RollingSink<T> setPendingPrefix(String pendingPrefix) {
+	public BucketingSink<T> setPendingPrefix(String pendingPrefix) {
 		this.pendingPrefix = pendingPrefix;
 		return this;
 	}
@@ -817,7 +817,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	/**
 	 * Sets the suffix of valid-length files. The default is {@code ".valid-length"}.
 	 */
-	public RollingSink<T> setValidLengthSuffix(String validLengthSuffix) {
+	public BucketingSink<T> setValidLengthSuffix(String validLengthSuffix) {
 		this.validLengthSuffix = validLengthSuffix;
 		return this;
 	}
@@ -825,7 +825,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	/**
 	 * Sets the prefix of valid-length files. The default is {@code "_"}.
 	 */
-	public RollingSink<T> setValidLengthPrefix(String validLengthPrefix) {
+	public BucketingSink<T> setValidLengthPrefix(String validLengthPrefix) {
 		this.validLengthPrefix = validLengthPrefix;
 		return this;
 	}
@@ -833,7 +833,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	/**
 	 * Sets the prefix of part files.  The default is {@code "part"}.
 	 */
-	public RollingSink<T> setPartPrefix(String partPrefix) {
+	public BucketingSink<T> setPartPrefix(String partPrefix) {
 		this.partPrefix = partPrefix;
 		return this;
 	}
@@ -845,7 +845,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	 * This should only be disabled if using the sink without checkpoints, to not remove
 	 * the files already in the directory.
 	 */
-	public RollingSink<T> disableCleanupOnOpen() {
+	public BucketingSink<T> disableCleanupOnOpen() {
 		this.cleanupOnOpen = false;
 		return this;
 	}
@@ -855,7 +855,7 @@ public class RollingSink<T> extends RichSinkFunction<T> implements InputTypeConf
 	 *
 	 * @param timeout The timeout, in milliseconds.
 	 */
-	public RollingSink<T> setAsyncTimeout(long timeout) {
+	public BucketingSink<T> setAsyncTimeout(long timeout) {
 		this.asyncTimeout = timeout;
 		return this;
 	}
