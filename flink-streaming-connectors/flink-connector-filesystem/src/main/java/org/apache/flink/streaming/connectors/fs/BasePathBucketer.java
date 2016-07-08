@@ -23,16 +23,11 @@ import org.apache.hadoop.fs.Path;
  * A {@link org.apache.flink.streaming.connectors.fs.Bucketer} that does not perform any
  * bucketing of files. All files are written to the base path.
  */
-public class BasePathBucketer implements Bucketer {
+public class BasePathBucketer<T> implements Bucketer<T> {
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	public boolean shouldStartNewBucket(Path basePath, Path currentBucketPath) {
-		return false;
-	}
-
-	@Override
-	public Path getNextBucketPath(Path basePath) {
+	public Path getBucketPath(Path basePath, T element) {
 		return basePath;
 	}
 

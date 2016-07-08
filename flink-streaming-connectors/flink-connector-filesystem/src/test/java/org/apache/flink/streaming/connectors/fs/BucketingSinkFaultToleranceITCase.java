@@ -111,7 +111,7 @@ public class BucketingSinkFaultToleranceITCase extends StreamFaultToleranceTestB
 				.map(new OnceFailingIdentityMapper(NUM_STRINGS));
 
 		BucketingSink<String> sink = new BucketingSink<String>(outPath)
-				.setBucketer(new BasePathBucketer())
+				.setBucketer(new BasePathBucketer<String>())
 				.setBatchSize(10000)
 				.setValidLengthPrefix("")
 				.setPendingPrefix("");

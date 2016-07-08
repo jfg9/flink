@@ -26,27 +26,21 @@ import java.io.Serializable;
  * to put emitted elements into rolling files.
  *
  * <p>
- * The {@code BucketingSink} has one active bucket that it is writing to at a time. Whenever
- * a new element arrives it will ask the {@code Bucketer} if a new bucket should be started and
- * the old one closed. The {@code Bucketer} can, for example, decide to start new buckets
- * based on system time.
+ * The {@code BucketingSink} can be writing to many buckets at a time, and it is responsible for managing
+ * a set of active buckets. Whenever a new element arrives it will ask the {@code Bucketer} for the bucket
+ * which the element should fall in. The {@code Bucketer} can, for example, determine buckets based on
+ * system time.
  */
-public interface Bucketer extends Serializable {
-
+public interface Bucketer<T> extends Serializable {
 	/**
-	 * Returns {@code true} when a new bucket should be started.
-	 *
-	 * @param currentBucketPath The bucket {@code Path} that is currently being used.
-	 */
-	boolean shouldStartNewBucket(Path basePath, Path currentBucketPath);
-
-	/**
-	 * Returns the {@link Path} of a new bucket file.
+	 * Returns the {@link Path} of a bucket file.
 	 *
 	 * @param basePath The base path containing all the buckets.
+	 * @param element The current element being processed.
 	 *
-	 * @return The complete new {@code Path} of the new bucket. This should include the {@code basePath}
-	 *      and also the {@code subtaskIndex} tp avoid clashes with parallel sinks.
+	 * @return The complete {@code Path} of the bucket which the provided element should fall in. This
+	 * should include the {@code basePath} and also the {@code subtaskIndex} to avoid clashes with
+	 * parallel sinks.
 	 */
-	Path getNextBucketPath(Path basePath);
+	Path getBucketPath(Path basePath, T element);
 }

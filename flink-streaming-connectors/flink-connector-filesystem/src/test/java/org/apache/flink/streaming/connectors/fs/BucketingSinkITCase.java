@@ -121,7 +121,7 @@ public class BucketingSinkITCase extends StreamingMultipleProgramsTestBase {
 				.filter(new OddEvenFilter());
 
 		BucketingSink<String> sink = new BucketingSink<String>(outPath)
-				.setBucketer(new BasePathBucketer())
+				.setBucketer(new BasePathBucketer<String>())
 				.setPartPrefix("part")
 				.setPendingPrefix("")
 				.setPendingSuffix("");
@@ -189,7 +189,7 @@ public class BucketingSinkITCase extends StreamingMultipleProgramsTestBase {
 
 		BucketingSink<Tuple2<IntWritable, Text>> sink = new BucketingSink<Tuple2<IntWritable, Text>>(outPath)
 				.setWriter(new SequenceFileWriter<IntWritable, Text>())
-				.setBucketer(new BasePathBucketer())
+				.setBucketer(new BasePathBucketer<Tuple2<IntWritable, Text>>())
 				.setPartPrefix("part")
 				.setPendingPrefix("")
 				.setPendingSuffix("");
@@ -264,7 +264,7 @@ public class BucketingSinkITCase extends StreamingMultipleProgramsTestBase {
 
 		BucketingSink<Tuple2<IntWritable, Text>> sink = new BucketingSink<Tuple2<IntWritable, Text>>(outPath)
 				.setWriter(new SequenceFileWriter<IntWritable, Text>("Default", SequenceFile.CompressionType.BLOCK))
-				.setBucketer(new BasePathBucketer())
+				.setBucketer(new BasePathBucketer<Tuple2<IntWritable, Text>>())
 				.setPartPrefix("part")
 				.setPendingPrefix("")
 				.setPendingSuffix("");
@@ -336,7 +336,7 @@ public class BucketingSinkITCase extends StreamingMultipleProgramsTestBase {
 		properties.put(AvroKeyValueSinkWriter.CONF_OUTPUT_VALUE_SCHEMA, valueSchema.toString());
 		BucketingSink<Tuple2<Integer, String>> sink = new BucketingSink<Tuple2<Integer, String>>(outPath)
 				.setWriter(new AvroKeyValueSinkWriter<Integer, String>(properties))
-				.setBucketer(new BasePathBucketer())
+				.setBucketer(new BasePathBucketer<Tuple2<Integer, String>>())
 				.setPartPrefix("part")
 				.setPendingPrefix("")
 				.setPendingSuffix("");
@@ -403,7 +403,7 @@ public class BucketingSinkITCase extends StreamingMultipleProgramsTestBase {
 		properties.put(AvroKeyValueSinkWriter.CONF_COMPRESS_CODEC, DataFileConstants.SNAPPY_CODEC);
 		BucketingSink<Tuple2<Integer, String>> sink = new BucketingSink<Tuple2<Integer, String>>(outPath)
 				.setWriter(new AvroKeyValueSinkWriter<Integer, String>(properties))
-				.setBucketer(new BasePathBucketer())
+				.setBucketer(new BasePathBucketer<Tuple2<Integer, String>>())
 				.setPartPrefix("part")
 				.setPendingPrefix("")
 				.setPendingSuffix("");
@@ -497,7 +497,7 @@ public class BucketingSinkITCase extends StreamingMultipleProgramsTestBase {
 				});
 
 		BucketingSink<String> sink = new BucketingSink<String>(outPath)
-				.setBucketer(new DateTimeBucketer("ss"))
+				.setBucketer(new DateTimeBucketer<String>("ss"))
 				.setPartPrefix("part")
 				.setPendingPrefix("")
 				.setPendingSuffix("");
